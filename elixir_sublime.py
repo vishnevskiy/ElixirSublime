@@ -11,7 +11,7 @@ _logfile = open(os.path.join(tempfile.gettempdir(), 'ElixirSublime.log'), 'w')
 _sessions = {}
 
 
-def plugin_loaded():
+def plugin_loaded(): 
     global _socket
     _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -30,7 +30,7 @@ def plugin_unloaded():
 
 
 def run_elixir():
-    run_process('mix deps.get')
+    run_process('mix deps.get').wait()
     return run_process('mix run --no-halt')
 
 
