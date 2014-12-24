@@ -1,6 +1,8 @@
 ElixirSublime
 ==========================
 
+![Example](https://raw.githubusercontent.com/vishnevskiy/ElixirSublime/master/ext/example.png)
+
 README coming...
 
 Ensure Elixir is on Sublime's PATH by settings.
