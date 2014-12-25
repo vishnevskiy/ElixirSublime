@@ -10,7 +10,7 @@ Features
 Demo
 ----
 
-![Demo](https://raw.githubusercontent.com/vishnevskiy/ElixirSublime/master/ext/example.gif)
+![Demo](https://raw.githubusercontent.com/vishnevskiy/ElixirSublime/master/demo.gif)
 
 Caveats
 -------
@@ -19,7 +19,7 @@ This is built by piggybacking on `IEx.Autocomplete` so it can be a little naive.
 
 - It does not understand macros, aliases and imports and therefore will not provide completion for them.
 - Go to definition does not work on local functions.
-- Since Elixir and Erlang sources tend to not ship with the install it does best effort for go to definition by opening the documentation in the browser.
+- Since Elixir and Erlang standard library sources tend to not ship with the install it does best effort for go to definition by opening the documentation in the browser.
 
 Installation
 ------------
