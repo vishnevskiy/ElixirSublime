@@ -38,7 +38,7 @@ def run_mix_task(cmd):
     cwd = os.path.join(os.path.dirname(__file__), 'sublime_completion')
     env = os.environ.copy()
     try:
-        env['PATH'] += ':' + settings.get('env')['PATH']
+        env['PATH'] += os.pathsep + settings.get('env')['PATH']
     except (TypeError, ValueError, KeyError):
         pass
     if _socket:
