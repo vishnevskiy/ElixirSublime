@@ -78,11 +78,18 @@ def is_erlang_file(filename):
     return filename and filename.endswith('erl')
 
 
-def expand_selection(view, point_or_region):
+def expand_selection(view, point_or_region, aliases={}):
     region = view.expand_by_class(point_or_region, 
         sublime.CLASS_WORD_START | 
         sublime.CLASS_WORD_END, ' (){},[]%&')
-    return view.substr(region).strip()
+    selection = view.substr(region).strip()
+    if aliases:
+        parts = selection.split('.')
+        for alias, canonical in aliases.items():
+            if alias == parts[0]:
+                parts[0] = canonical
+                return '.'.join(parts)
+    return selection
 
 
 def do_focus(fn, pattern):
@@ -109,6 +116,22 @@ def focus(fn, pattern, timeout=25):
 
 def focus_function(fn, function):
     focus(fn, 'def(p|macrop?)?\s%s' % function)
+
+
+def find_aliases(view):
+    aliases = {}
+    for region in view.find_all('^[\s\t]*?alias\s.+?$'):
+        alias_line = view.substr(region).strip()
+        for (pattern, replacer) in [
+            (r'^alias (.+?)\.(.+?)$', lambda prefix, alias: '%s.%s' % (prefix, alias)),
+            (r'^alias (.+?), as: (.+)$', lambda prefix, _: prefix),
+        ]:
+            matches = re.findall(pattern, alias_line)
+            if matches:
+                [(prefix, alias)] = matches
+                aliases[alias] = replacer(prefix, alias)
+                break
+    return aliases
 
 
 class ElixirSession(object):
@@ -174,7 +197,8 @@ class ElixirSession(object):
 
 class ElixirGotoDefinition(sublime_plugin.TextCommand):
   def run(self, edit):
-    selection = expand_selection(self.view, self.view.sel()[0])
+    aliases = find_aliases(self.view)
+    selection = expand_selection(self.view, self.view.sel()[0], aliases=aliases)
     if selection:
         session = ElixirSession.ensure()
         if session.send('GOTO', selection):
@@ -225,9 +249,11 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
         if not is_elixir_file(view.file_name()):
             return None
 
+        aliases = find_aliases(view)
+
         session = ElixirSession.ensure()
         
-        if not session.send('COMPLETE', expand_selection(view, locations[0])):
+        if not session.send('COMPLETE', expand_selection(view, locations[0], aliases=aliases)):
             return None
 
         completions = session.recv()
