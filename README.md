@@ -28,6 +28,8 @@ Installation
 2. Brand up the commands with `CTRL+Shift+P` or `CMD+Shift+P` and type `Package Control: Install Package` then `ElixirSublime`.
 3. Repeat the previous step for `SublimeLinter3` if you don't already have it.
 
+__There is currently a pull request pending to add it to Sublime Package Control, so until then this repo has to be added manually.__
+
 Troubleshooting
 ---------------
 
