@@ -15,6 +15,8 @@ Ensure Elixir is on Sublime's PATH by settings.
 }
 ```
 
+Shift click on a module or function to go to definition.
+
 If you want linting support then install `SublimeLinter3`.
 
 The plugin currently does not understand aliases so autocompletion with them does not work.

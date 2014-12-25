@@ -11,7 +11,7 @@ defmodule SublimeCompletion do
       worker(Task, [SublimeCompletion, :connect, [System.get_env("ELIXIR_SUBLIME_PORT") |> String.to_integer]])
     ]
 
-    opts = [strategy: :one_for_one, name: KVServer.Supervisor]
+    opts = [strategy: :one_for_one, name: SublimeCompletion.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
@@ -44,6 +44,10 @@ defmodule SublimeCompletion do
         path 
           |> Code.append_path
         nil
+      ["GOTO", target] ->
+        target 
+          |> find_goto
+          |> Poison.encode_to_iodata!
       _ ->
         nil
     end
@@ -149,4 +153,47 @@ defmodule SublimeCompletion do
         []
     end
   end
+
+  def normalize_goto(target) do
+    cond do
+      Regex.match?(~r/^:[a-z]/, target) -> target |> String.slice(1..-1)
+      Regex.match?(~r/^[A-Z]/, target) -> "Elixir.#{target}"
+      true -> nil
+    end
+  end
+
+  def split_goto(nil), do: {nil, nil}
+  def split_goto(target) do
+    parts = String.split(target, ".")
+    last_part = List.last(parts)
+    if length(parts) > 1 and Regex.match?(~r/^[a-z]/, last_part) do
+      {parts |> Enum.slice(0..-2) |> Enum.join(".") |> String.to_atom, last_part |> String.to_atom}
+    else
+      {target |> String.to_atom, nil}
+    end
+  end
+
+  defp find_goto(target) when is_bitstring(target) do
+    target 
+      |> normalize_goto 
+      |> split_goto 
+      |> find_goto
+  end
+  defp find_goto({nil, nil}), do: nil
+  defp find_goto({module, function}) do
+    try do
+      %{
+        module: trim_elixir_module(module),
+        function: function,
+        arities: module.module_info[:exports] |> Keyword.get_values(function) |> Enum.sort,
+        source: module.module_info[:compile][:source] |> to_string
+      }
+    rescue
+      _ in UndefinedFunctionError -> nil
+    end
+  end
+
+  def trim_elixir_module(module) when is_atom(module), do: module |> to_string |> trim_elixir_module
+  def trim_elixir_module("Elixir." <> module), do: module |> trim_elixir_module
+  def trim_elixir_module(module), do: module
 end

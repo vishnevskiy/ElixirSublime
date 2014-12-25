@@ -5,6 +5,8 @@ import sublime_plugin
 import subprocess
 import json
 import socket
+import re
+import webbrowser
 
 _socket = None
 _logfile = open(os.path.join(tempfile.gettempdir(), 'ElixirSublime.log'), 'w')
@@ -12,6 +14,8 @@ _sessions = {}
 
 
 def plugin_loaded(): 
+    run_mix_task('deps.get')
+
     global _socket
     _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -29,22 +33,18 @@ def plugin_unloaded():
         session.close()
 
 
-def run_elixir():
-    run_process('mix deps.get').wait()
-    return run_process('mix run --no-halt')
-
-
-def run_process(cmd):
+def run_mix_task(cmd):
     settings = sublime.load_settings('Preferences.sublime-settings')
     cwd = os.path.join(os.path.dirname(__file__), 'sublime_completion')
     env = os.environ.copy()
     try:
         env['PATH'] += ':' + settings.get('env')['PATH']
     except (TypeError, ValueError, KeyError):
-        pass 
-    env['ELIXIR_SUBLIME_PORT'] = str(_socket.getsockname()[1])
+        pass
+    if _socket:
+        env['ELIXIR_SUBLIME_PORT'] = str(_socket.getsockname()[1])
     return subprocess.Popen( 
-        cmd.split(), 
+        ['mix'] + cmd.split(), 
         cwd=cwd, 
         stderr=_logfile.fileno(),
         stdout=_logfile.fileno(),
@@ -74,6 +74,39 @@ def is_elixir_file(filename):
     return filename and filename.endswith(('.ex', '.exs'))
 
 
+def is_erlang_file(filename):
+    return filename and filename.endswith('erl')
+
+
+def expand_selection(view, point_or_region):
+    region = view.expand_by_class(point_or_region, 
+        sublime.CLASS_WORD_START | 
+        sublime.CLASS_WORD_END, ' (){},[]%')
+    return view.substr(region).strip()
+
+
+def do_focus(fn, pattern):
+    window = sublime.active_window()
+    view = window.open_file(fn)
+    if view.is_loading():
+        focus(fn, pattern)
+    else:
+        window.focus_view(view)
+        if pattern:
+            r = view.find(pattern, 0)
+            if r:
+                row, col = view.rowcol(r.begin())
+                pt = view.text_point(row, col)
+                r = sublime.Region(pt, pt)
+                view.sel().clear()
+                view.sel().add(r)
+                view.show(pt)
+
+
+def focus(fn, pattern, timeout=25):
+    sublime.set_timeout(lambda: do_focus(fn, pattern), timeout)
+
+
 class ElixirSession(object):
     @classmethod
     def ensure(cls, cwd=None):
@@ -100,7 +133,7 @@ class ElixirSession(object):
         self.process = None
 
     def connect(self):
-        self.process = run_elixir() 
+        self.process = run_mix_task('run --no-halt')
 
         self.socket, _ = _socket.accept()
         self.socket.settimeout(5)
@@ -135,6 +168,48 @@ class ElixirSession(object):
             self.process.kill()
 
 
+class ElixirGotoDefinition(sublime_plugin.TextCommand):
+  def run(self, edit):
+    selection = expand_selection(self.view, self.view.sel()[0])
+    if selection:
+        session = ElixirSession.ensure()
+        if session.send('GOTO', selection):
+            goto = json.loads(session.recv())
+            if goto:
+                source = goto['source']
+                function = goto['function']
+                if not os.path.exists(source):
+                    url = None
+                    if is_erlang_file(source):
+                        matches = re.findall(r'/lib/(.+?)/src/(.+?)\.erl$', source)
+                        if matches:
+                            [(_, module)] = matches
+                            url = 'http://www.erlang.org/doc/man/%s.html' % module
+                            if function:
+                                url += '#%s-%s' % (goto['function'], goto['arities'][0])
+                    elif is_elixir_file(source):
+                        matches = re.findall(r'/lib/(.+?)/lib/(.+?)\.exs?$', source)
+                        if matches:
+                            [(lib, _)] = matches
+                            url = 'http://elixir-lang.org/docs/stable/%s/%s.html' % (lib, goto['module'])
+                            if function:
+                                url += '#%s/%s' % (goto['function'], goto['arities'][0])
+                    if url:
+                        webbrowser.open(url)
+                    return
+                if function:
+                    if is_erlang_file(source):
+                        pattern = '^%s' % function
+                    else:
+                        pattern = 'def(p|macrop?)?\s%s' % function
+                else:
+                    if is_erlang_file(source):
+                        pattern = None
+                    else:
+                        pattern = 'defmodule?\s%(module)s' % goto
+                focus(source, pattern)
+
+
 class ElixirAutocomplete(sublime_plugin.EventListener):
     def on_activated_async(self, view):
         self.on_load_async(view)
@@ -148,15 +223,9 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
         if not is_elixir_file(view.file_name()):
             return None
 
-        region = view.expand_by_class(locations[0], 
-            sublime.CLASS_WORD_START | 
-            sublime.CLASS_WORD_END | 
-            sublime.CLASS_LINE_END | 
-            sublime.CLASS_LINE_START, ' ')
-
         session = ElixirSession.ensure()
         
-        if not session.send('COMPLETE', view.substr(region).strip()):
+        if not session.send('COMPLETE', expand_selection(view, locations[0])):
             return None
 
         completions = session.recv()
@@ -180,14 +249,13 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
 
         return rv 
 
-
 try:
   from SublimeLinter.lint import Linter
 
   class Elixirc(Linter):
       syntax = 'elixir'
 
-      executable = 'elixirc'
+      executable = 'elixirc' 
       tempfile_suffix = 'ex'
 
       regex = (
@@ -198,7 +266,7 @@ try:
     
       defaults = { 
           'include_dirs': [],
-          'pa': [] 
+          'pa': []
       }
 
       def cmd(self):
