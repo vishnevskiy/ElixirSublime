@@ -177,14 +177,14 @@ class ElixirSession(object):
             self.socket.send(str.encode(args))
             self.socket.send(b'\n')
             return True 
-        except OSError:
+        except (OSError, IOError):
             self.reset()
             return False
 
     def recv(self):
         try:
             return self.file.readline().strip()
-        except OSError:
+        except (OSError, IOError):
             self.reset()
             return None  
 
