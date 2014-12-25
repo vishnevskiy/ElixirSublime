@@ -3,7 +3,6 @@
 		"button": "button1",
 		"modifiers": ["shift"],
 		"press_command": "drag_select",
-		"command": "elixir_goto_definition",
-		"context": [{ "key": "selector", "operator": "equal", "operand": "elixir.go" }]
+		"command": "elixir_goto_definition"
 	}
 ]

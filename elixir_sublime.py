@@ -200,7 +200,7 @@ class ElixirGotoDefinition(sublime_plugin.TextCommand):
     aliases = find_aliases(self.view)
     selection = expand_selection(self.view, self.view.sel()[0], aliases=aliases)
     if selection:
-        session = ElixirSession.ensure()
+        session = ElixirSession.ensure(os.path.dirname(self.view.file_name()))
         if session.send('GOTO', selection):
             goto = json.loads(session.recv())
             if goto:
@@ -243,7 +243,7 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
     def on_load_async(self, view):
         filename = view.file_name()
         if is_elixir_file(filename):
-            ElixirSession.ensure(os.path.basename(filename))
+            ElixirSession.ensure(os.path.dirname(filename))
 
     def on_query_completions(self, view, prefix, locations):
         if not is_elixir_file(view.file_name()):
@@ -251,7 +251,7 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
 
         aliases = find_aliases(view)
 
-        session = ElixirSession.ensure()
+        session = ElixirSession.ensure(os.path.dirname(view.file_name()))
         
         if not session.send('COMPLETE', expand_selection(view, locations[0], aliases=aliases)):
             return None
