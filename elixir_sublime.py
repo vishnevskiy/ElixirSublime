@@ -81,7 +81,7 @@ def is_erlang_file(filename):
 def expand_selection(view, point_or_region):
     region = view.expand_by_class(point_or_region, 
         sublime.CLASS_WORD_START | 
-        sublime.CLASS_WORD_END, ' (){},[]%')
+        sublime.CLASS_WORD_END, ' (){},[]%&')
     return view.substr(region).strip()
 
 

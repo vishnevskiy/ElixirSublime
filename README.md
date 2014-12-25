@@ -1,7 +1,7 @@
 ElixirSublime
 ==========================
 
-![Example](https://raw.githubusercontent.com/vishnevskiy/ElixirSublime/master/ext/example.png)
+![Example](https://raw.githubusercontent.com/vishnevskiy/ElixirSublime/master/ext/example.gif)
 
 README coming...
 
