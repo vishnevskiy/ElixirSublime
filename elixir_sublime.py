@@ -107,6 +107,10 @@ def focus(fn, pattern, timeout=25):
     sublime.set_timeout(lambda: do_focus(fn, pattern), timeout)
 
 
+def focus_function(fn, function):
+    focus(fn, 'def(p|macrop?)?\s%s' % function)
+
+
 class ElixirSession(object):
     @classmethod
     def ensure(cls, cwd=None):
@@ -199,15 +203,13 @@ class ElixirGotoDefinition(sublime_plugin.TextCommand):
                     return
                 if function:
                     if is_erlang_file(source):
-                        pattern = '^%s' % function
+                        focus(source, '^%s' % function)
                     else:
-                        pattern = 'def(p|macrop?)?\s%s' % function
-                else:
-                    if is_erlang_file(source):
-                        pattern = None
-                    else:
-                        pattern = 'defmodule?\s%(module)s' % goto
-                focus(source, pattern)
+                        focus_function(source, function)
+                elif is_elixir_file(source):
+                    focus(source, 'defmodule?\s%(module)s' % goto)
+            else:
+                focus_function(self.view.file_name(), selection)
 
 
 class ElixirAutocomplete(sublime_plugin.EventListener):
