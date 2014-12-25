@@ -115,7 +115,7 @@ def focus(fn, pattern, timeout=25):
 
 
 def focus_function(fn, function):
-    focus(fn, 'def(p|macrop?)?\s%s' % function)
+    focus(fn, 'def(p|macrop?)?\s%s\(?' % function)
 
 
 def find_aliases(view):
@@ -227,11 +227,11 @@ class ElixirGotoDefinition(sublime_plugin.TextCommand):
                     return
                 if function:
                     if is_erlang_file(source):
-                        focus(source, '^%s' % function)
+                        focus(source, '^%s\(' % function)
                     else:
                         focus_function(source, function)
                 elif is_elixir_file(source):
-                    focus(source, 'defmodule?\s%(module)s' % goto)
+                    focus(source, 'defmodule?\s%(module)s\sdo' % goto)
             else:
                 focus_function(self.view.file_name(), selection)
 
