@@ -280,7 +280,7 @@ class ElixirAutocomplete(sublime_plugin.EventListener):
 try:
   from SublimeLinter.lint import Linter
 
-  class Elixirc(Linter):
+  class ElixirLinter(Linter):
       syntax = 'elixir'
 
       executable = 'elixirc' 
@@ -291,31 +291,17 @@ try:
           r"(?:(?P<warning>\swarning:\s)|(?P<error>\s))"
           r"(?P<message>.+)"
       )
-    
-      defaults = { 
-          'include_dirs': [],
-          'pa': []
-      }
 
       def cmd(self):
-          tmpdir = os.path.join(tempfile.gettempdir(), 'SublimeLinter3')
           command = [
             self.executable_path,
             '--warnings-as-errors',
             '--ignore-module-conflict',
-            '-o', tmpdir
+            '-o', os.path.join(tempfile.gettempdir(), 'SublimeLinter3')
           ]
 
-          settings = self.get_view_settings()
-          dirs = settings.get('include_dirs', [])
-          paths = settings.get('pa', [])
-          paths.extend(find_ebin_folders(find_mix_project()))
-
-          for p in paths:
-              command.extend(['-pa', p])
-
-          for d in dirs:
-              command.extend(['-I', d])
+          for path in find_ebin_folders(find_mix_project()):
+              command.extend(['-pa', path])
 
           return command
 except ImportError:
