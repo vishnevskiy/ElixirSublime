@@ -28,6 +28,8 @@ Installation
 2. Brand up the commands with `CTRL+Shift+P` or `CMD+Shift+P` and type `Package Control: Install Package` then `ElixirSublime`.
 3. Repeat the previous step for `SublimeLinter3` if you don't already have it.
 
+*This package does not offer syntax highlighting. Use the offical [Elixir TextMate bundle](https://github.com/elixir-lang/elixir-tmbundle).*
+
 Troubleshooting
 ---------------
 
