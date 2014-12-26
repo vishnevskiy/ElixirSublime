@@ -43,17 +43,31 @@ def run_mix_task(cmd):
         pass
     if _socket:
         env['ELIXIR_SUBLIME_PORT'] = str(_socket.getsockname()[1])
+
+    if sublime.platform() == "windows":
+        # on Windows, mix is a .bat file, which `subprocess` can't just launch like that. Use cmd.exe to launch the .bat file
+        launcher = ['cmd', '/c', 'mix']
+
+        # don't show the console window
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        
+    else:
+        launcher = ['mix']
+        startupinfo = None
+
     return subprocess.Popen( 
-        ['mix'] + cmd.split(), 
+        launcher + cmd.split(), 
         cwd=cwd, 
         stderr=_logfile.fileno(),
         stdout=_logfile.fileno(),
-        env=env)
+        env=env,
+        startupinfo=startupinfo)
 
 
 def find_mix_project(cwd=None):
     cwd = cwd or os.getcwd()   
-    if cwd == '/':
+    if cwd == os.path.realpath('/'):
         return None
     elif os.path.exists(os.path.join(cwd, 'mix.exs')):
         return cwd
