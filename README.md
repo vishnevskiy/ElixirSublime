@@ -7,6 +7,8 @@ Features
 - Go to definition for modules and functions with `Shift+Click`
 - Errors and warnings via [SublimeLinter3](https://github.com/SublimeLinter/SublimeLinter3).
 
+*This package does not offer syntax highlighting. Use the offical [Elixir TextMate bundle](https://github.com/elixir-lang/elixir-tmbundle).*
+
 Demo
 ----
 
@@ -27,8 +29,6 @@ Installation
 1. Install [Sublime Package Control](https://sublime.wbond.net/installation#st3) if you haven't already.
 2. Brand up the commands with `CTRL+Shift+P` or `CMD+Shift+P` and type `Package Control: Install Package` then `ElixirSublime`.
 3. Repeat the previous step for `SublimeLinter` if you don't already have it.
-
-*This package does not offer syntax highlighting. Use the offical [Elixir TextMate bundle](https://github.com/elixir-lang/elixir-tmbundle).*
 
 Troubleshooting
 ---------------
