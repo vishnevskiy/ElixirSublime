@@ -314,7 +314,7 @@ try:
             '-o', os.path.join(tempfile.gettempdir(), 'SublimeLinter3')
           ]
 
-          for path in find_ebin_folders(find_mix_project()):
+          for path in find_ebin_folders(find_mix_project(self.filename)):
               command.extend(['-pa', path])
 
           return command
