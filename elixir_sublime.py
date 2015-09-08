@@ -11,11 +11,15 @@ import webbrowser
 _socket = None
 _logfile = open(os.path.join(tempfile.gettempdir(), 'ElixirSublime.log'), 'w')
 _sessions = {}
-
+_elixir_source_dir = ""
 
 def plugin_loaded(): 
     run_mix_task('deps.get')
 
+    global _elixir_source_dir
+    settings = sublime.load_settings("ElixirSublime.sublime-settings")
+    _elixir_source_dir = settings.get('elixir_source_dir') or ""
+    
     global _socket
     _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -230,9 +234,18 @@ class ElixirGotoDefinition(sublime_plugin.TextCommand):
                             if function:
                                 url += '#%s-%s' % (goto['function'], goto['arities'][0])
                     elif is_elixir_file(source):
-                        matches = re.findall(r'/lib/(.+?)/lib/(.+?)\.exs?$', source)
+                        matches = re.findall(r'(/lib/(.+?)/lib/(.+?)\.exs?)$', source)
                         if matches:
-                            [(lib, _)] = matches
+                            [(path, lib, _)] = matches
+                            global _elixir_source_dir;
+                            elixir_source_path = _elixir_source_dir + path;
+                            if os.path.exists(elixir_source_path):
+                                if function:
+                                    focus_function(elixir_source_path, function)
+                                else:
+                                    focus(elixir_source_path, 'defmodule?\s%(module)s\sdo' % goto)
+                                return
+
                             url = 'http://elixir-lang.org/docs/stable/%s/%s.html' % (lib, goto['module'])
                             if function:
                                 url += '#%s/%s' % (goto['function'], goto['arities'][0])
