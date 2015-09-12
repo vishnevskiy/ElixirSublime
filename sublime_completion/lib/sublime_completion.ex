@@ -43,6 +43,10 @@ defmodule SublimeCompletion do
       ["PATH", path] ->
         path 
           |> Code.append_path
+
+        for app <- Path.wildcard(path <> "/*.app") do
+           app |> Path.basename(".app") |> String.to_atom |> Application.load
+        end
         nil
       ["GOTO", target] ->
         target 
