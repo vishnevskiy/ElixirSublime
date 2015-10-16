@@ -189,7 +189,7 @@ defmodule SublimeCompletion do
       %{
         module: trim_elixir_module(module),
         function: function,
-        arities: module.module_info[:exports] |> Keyword.get_values(function) |> Enum.sort,
+        arities: function_arities(module, function)
         source: module.module_info[:compile][:source] |> to_string
       }
     rescue
@@ -200,4 +200,19 @@ defmodule SublimeCompletion do
   def trim_elixir_module(module) when is_atom(module), do: module |> to_string |> trim_elixir_module
   def trim_elixir_module("Elixir." <> module), do: module |> trim_elixir_module
   def trim_elixir_module(module), do: module
+
+  defp function_arities(module, function) do
+    module.module_info[:exports]
+      |> Keyword.get_values(function)
+      |> case do
+          [] -> function_macro_arities(module, function)
+          arities -> arities
+        end
+      |> Enum.sort
+  end
+
+  defp function_macro_arities(module, "MACRO-" <> function), do: []
+  defp function_macro_arities(module, function) do
+    function_arities(module, "MACRO-" <> to_string(function) |> String.to_atom)
+  end
 end
