@@ -189,7 +189,7 @@ defmodule SublimeCompletion do
       %{
         module: trim_elixir_module(module),
         function: function,
-        arities: function_arities(module, function)
+        arities: function_arities(module, function) |> Enum.sort,
         source: module.module_info[:compile][:source] |> to_string
       }
     rescue
@@ -208,7 +208,6 @@ defmodule SublimeCompletion do
           [] -> function_macro_arities(module, function)
           arities -> arities
         end
-      |> Enum.sort
   end
 
   defp function_macro_arities(module, "MACRO-" <> function), do: []
