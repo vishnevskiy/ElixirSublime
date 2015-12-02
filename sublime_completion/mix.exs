@@ -12,7 +12,7 @@ defmodule SublimeCompletion.Mixfile do
 
   def application do
     [
-      applications: [:logger, :poison],
+      applications: [:iex, :logger, :poison],
       mod: {SublimeCompletion, []}
     ]
   end
