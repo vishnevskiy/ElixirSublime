@@ -14,8 +14,6 @@ _sessions = {}
 _elixir_source_dir = ""
 
 def plugin_loaded(): 
-    run_mix_task('deps.get')
-
     global _elixir_source_dir
     settings = sublime.load_settings("ElixirSublime.sublime-settings")
     _elixir_source_dir = settings.get('elixir_source_dir') or ""
@@ -27,6 +25,7 @@ def plugin_loaded():
     _socket.listen(1)
     _socket.settimeout(5)
 
+    run_mix_task('deps.get')
 
 def plugin_unloaded():
     if _logfile:
