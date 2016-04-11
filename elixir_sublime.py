@@ -178,7 +178,7 @@ class ElixirSession(object):
         self.process = None
 
     def connect(self):
-        self.process = run_mix_task('run --no-halt')
+        self.process = run_mix_task('run')
 
         self.socket, _ = _socket.accept()
         self.socket.settimeout(5)
